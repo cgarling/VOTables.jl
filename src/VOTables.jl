@@ -38,6 +38,7 @@ struct VOTableException <: Exception
     message::String
 end
 
+# basetype, jltype, nullvalue should probably be type-parametrized to achieve type stability in row processing code
 Base.@kwdef struct ColMeta
     attrs::Dictionary{Symbol,String}
     basetype::DataType
@@ -55,17 +56,16 @@ read(votfile; kwargs...) = read(StructArray, votfile; kwargs...)
 function read(result_type, votfile; postprocess=true, unitful=false, strict=true)
     tblx = tblxml(votfile; strict)
     colmetas = get_colmetas(tblx)
-    fieldattrs = map(m->m.attrs, colmetas)
-    colnames = @p fieldattrs map(Symbol(_[:name]))
-    colarrays = map(c -> Union{c.jltype,Missing}[], colmetas)
+    colnames = @p colmetas map(Symbol(_.attrs[:name]))
+    colarrays = @p colmetas map(Union{_.jltype, Missing}[])
     @p let
         colarrays
         _filltable!(__, tblx)
         @modify(col -> any(ismissing, col) ? col : convert(Vector{nonmissingtype(eltype(col))}, col), __[∗])  # narrow types, removing Missing unless actually present
-        postprocess ? modify(__, ∗, fieldattrs) do col, attrs
+        postprocess ? modify(__, ∗, colmetas) do col, (;attrs)
             postprocess_col(col, attrs; unitful)
         end : __
-        modify(__, ∗, fieldattrs) do col, attrs
+        modify(__, ∗, colmetas) do col, (;attrs)
             MetadataArray(
                 col,
                 _filter(!isnothing, (
@@ -239,14 +239,14 @@ function _filltable!(cols, tblx, ::Val{:BINARY})
             )
             curdata = @view dataraw[i:i+len-1]
             i += len
-            value = _parse_binary(colmeta.jltype, curdata)
-            if !ismissing(value)
-                if value == colmeta.nullvalue
-                    value = missing
-                elseif value isa AbstractArray && all(ismissing, value)
-                    value = missing
+            rawvalue = _parse_binary(colmeta.jltype, curdata)
+            value = @something(if !ismissing(rawvalue)
+                if rawvalue == colmeta.nullvalue
+                    missing
+                elseif rawvalue isa AbstractArray && all(ismissing, rawvalue)
+                    missing
                 end
-            end
+            end, rawvalue)
             push!(col, value)
         end
     end
@@ -330,14 +330,15 @@ get_colmetas(tblxml) = @p let
         nullvalues = @p let 
             fieldxml
             _findall("ns:VALUES", __, ns)
-            filter(v->haskey(v, "null"))
-            map(v -> v["null"])
-            map(txt -> try parse(basetype, txt) catch err nothing end)
+            filter(haskey(_, "null"))
+            map(_["null"])
+            map(try parse(basetype, _) catch err nothing end)
         end
-        nullvalue = isempty(nullvalues) ? nothing : nullvalues[1]
+        length(nullvalues) > 1 && @warn "Multiple null values found" column=attrs[:name] nullvalues
+        nullvalue = @oget first(nullvalues)
         desc = @p fieldxml |> _findall("ns:DESCRIPTION", __, ns) |> maybe(nodecontent ∘ only)(__)
         isnothing(desc) || insert!(attrs, :description, desc)
-        return ColMeta(attrs=attrs, basetype=basetype, jltype=jltype, typesize=typesize, fixwidth=fixwidth, nullvalue=nullvalue)
+        return ColMeta(; attrs, basetype, jltype, typesize, fixwidth, nullvalue)
     end
 end
 

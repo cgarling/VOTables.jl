@@ -30,9 +30,9 @@ const TYPE_VO_TO_NBYTES = Dict(
 )
 
 
-function vo2jltype(colspec)
-    arraysize = get(colspec, :arraysize, nothing)
-    basetype = TYPE_VO_TO_JL[colspec[:datatype]]
+function vo2jltype(attrs)
+    arraysize = get(attrs, :arraysize, nothing)
+    basetype = TYPE_VO_TO_JL[attrs[:datatype]]
     if isnothing(arraysize) || arraysize == "1"
         basetype
     elseif occursin("x", arraysize)
@@ -60,11 +60,11 @@ function jl2votype(T::Type)
     return (datatype=only(votypes),)
 end
 
-function vo2nbytes_fixwidth(colspec)
-    arraysize = get(colspec, :arraysize, "1")
+function vo2nbytes_fixwidth(attrs)
+    arraysize = get(attrs, :arraysize, "1")
     arraysize[end] == '*' && return nothing
     nel = parse.(Int64, split(arraysize, "x")) |> prod
-    return nel * TYPE_VO_TO_NBYTES[colspec[:datatype]]
+    return nel * TYPE_VO_TO_NBYTES[attrs[:datatype]]
 end
 
 
