@@ -279,10 +279,20 @@ end
     ]
         tbl_c = tbl |> Tables.columntable
         @testset for tbl_f in (identity, rowtable, StructArray, DictArray)
-            tbl |> tbl_f |> VOTables.write(f)
-            read_c = VOTables.read(f; unitful=true) |> Tables.columntable
-            @test isequal(read_c, tbl_c)
-            @test map(eltype, read_c) == map(eltype, tbl_c)
+            @testset "file" begin
+                tbl |> tbl_f |> VOTables.write(f)
+                read_c = VOTables.read(f; unitful=true) |> Tables.columntable
+                @test isequal(read_c, tbl_c)
+                @test map(eltype, read_c) == map(eltype, tbl_c)
+            end
+
+            @testset "iobuffer" begin
+                iob = IOBuffer()
+                tbl |> tbl_f |> VOTables.write(iob)
+                read_c = VOTables.read(iob; unitful=true) |> Tables.columntable
+                @test isequal(read_c, tbl_c)
+                @test map(eltype, read_c) == map(eltype, tbl_c)
+            end
         end
     end
 end

@@ -282,9 +282,13 @@ function _filltable!(cols, tblx, ::Val{:TABLEDATA})
 end
 
 function tblxml(votfile; strict::Bool)
-    isfile(votfile) || throw(SystemError("""opening file "$votfile": No such file or directory"""))
-    # xml = @p Base.read(votfile, String) |> parsexml
-    xml = @p StringView(mmap(votfile)) |> parsexml
+    xml = if votfile isa IO
+        parsexml(votfile)
+    else # filename
+        isfile(votfile) || throw(SystemError("""opening file "$votfile": No such file or directory"""))
+        # xml = @p Base.read(votfile, String) |> parsexml
+        @p StringView(mmap(votfile)) |> parsexml
+    end
     tables = @p let 
         xml
         root

@@ -52,3 +52,20 @@ function Base.iterate(iter::ChildElementPtrIterator, cur_ptr)
     cur_ptr == C_NULL && return nothing
     return cur_ptr, cur_ptr
 end
+
+# XXX: piracy, should upstream
+function Base.write(io::IO, x::EzXML.Document)
+    mktemp() do path, fio
+        Base.write(path, x)
+        Base.write(io, fio)
+    end
+end
+
+function EzXML.parsexml(io::IO)
+    mktemp() do path, fio
+        seekstart(io)
+        Base.write(fio, io)
+        close(fio)
+        @p StringView(Base.read(path)) |> parsexml
+    end
+end
