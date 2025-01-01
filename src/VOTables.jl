@@ -1,4 +1,4 @@
-@doc Base.read(joinpath(dirname(@__DIR__), "README.md"), String) module VOTables
+module VOTables
 
 using EzXML
 using Base64
