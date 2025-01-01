@@ -14,6 +14,7 @@ using DataPipes
 using AccessorsExtra
 using AstroAngles
 using Dates
+using DateFormats: yeardecimal
 
 export metadata, colmetadata
 
@@ -104,12 +105,14 @@ function _container_from_components(::Type{StructArray}, pairs)
     keys = map(first, pairs)
     vals = map(last, pairs)
     while !allunique(keys)
+        renamed_keys = []
         for (i, key) in enumerate(keys)
             if any(==(key), keys[1:i-1])
-                @warn "Duplicate column name '$key' found. The second occurrence will be renamed to '$(Symbol(key, "_"))'."
+                push!(renamed_keys, key)
                 keys[i] = Symbol(string(key, "_"))
             end
         end
+        @warn "Duplicate column names found. Repeating occurrences have `_` appended to them." renamed_keys
     end
     NamedTuple{Tuple(keys)}(Tuple(vals)) |> StructArray
 end
@@ -121,17 +124,20 @@ function postprocess_col(col, attrs; unitful::Bool)
         if eltype(col) <: AbstractString && unit == "'Y:M:D'"
             map(x -> parse(Date, x, dateformat"Y-m-d"), col)
         elseif eltype(col) <: Real && unit == "d"
-            @warn "assuming julian days" column=attrs[:name]
+            @warn "assuming julian days" column=attrs[:name] unit first(col)
             map(julian2datetime, col)
+        elseif eltype(col) <: Real && unit == "yr"
+            @warn "assuming years AD" column=attrs[:name] unit first(col)
+            map(yeardecimal, col)
         elseif isnothing(unit)
             try
                 map(x -> parse(Date, x, dateformat"Y-m-d"), col)
             catch exc
-                @warn "unknown time unit" unit eltype(col) exc
+                @warn "unknown time unit" column=attrs[:name] unit eltype(col) first(col) exc
                 col
             end
         else
-            @warn "unknown time unit" unit eltype(col)
+            @warn "unknown time unit" column=attrs[:name] unit eltype(col) first(col)
             col
         end
     elseif "pos.eq.ra" in ucds && unit == "\"h:m:s\""
@@ -142,7 +148,7 @@ function postprocess_col(col, attrs; unitful::Bool)
         if eltype(col) <: Union{Number,Missing,Nothing}
             unit_viz_to_jl(col, unit)
         else
-            @warn "column with a non-numeric eltype has a unit specified; ignoring the unit" unit eltype(col) attrs
+            @warn "column with a non-numeric eltype has a unit specified; ignoring the unit" column=attrs[:name] unit eltype(col) first(col)
             col
         end
     else

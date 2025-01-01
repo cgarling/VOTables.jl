@@ -16,12 +16,7 @@ function unit_viz_to_jl(col, viz::AbstractString)
         @p let
             viz
             replace(__,
-                r"\bdeg\b" => "°",
-                r"\barcsec\b" => "arcsecond",
-                r"\barcmin\b" => "arcminute",
-                r"\bum\b" => "μm",
-                r"\b(/beam|electron)\b" => (s -> (@warn "ignoring the unsupported '$s' unit" viz; "")),)
-            replace(__,
+                r"\b(/beam|/pix|electron)\b" => (s -> (@warn "ignoring the unsupported '$s' unit" viz; "")),
                 "'" => "",  # XXX: shouldn't have arcminutes described this way?
             )
             replace(__,
@@ -31,14 +26,24 @@ function unit_viz_to_jl(col, viz::AbstractString)
                 r"\.$" => "",
                 r"([^*])\*\*([^*])" => s"\1^\2",  # XXX: should be tested
             )
+            
             # handle eg "mas.yr-1":
+            replace(__, r"(\w)\." => s"\1*")
+            replace(__, r"(\w)(-?\d)" => s"\1^\2")
+
             replace(__,
-                r"(\w)\." => s"\1*",
-                r"(\w)(-?\d)" => s"\1^\2")
+                r"\bdeg\b" => "°",
+                r"\barcsec\b" => "arcsecond",
+                r"\barcmin\b" => "arcminute",
+                r"\bum\b" => "μm")
             uparse(unit_context=[Unitful; Unitful.unitmodules], __)
         end
     catch exception
-        @warn "cannot parse unit '$viz', ignoring it" exception
+        if exception isa ArgumentError && occursin("could not be found in unit modules", exception.msg)
+            @warn "cannot parse unit '$viz', ignoring it"
+        else
+            @warn "cannot parse unit '$viz', ignoring it" exception
+        end
         return col
     end
     return postf.(col) .* u
