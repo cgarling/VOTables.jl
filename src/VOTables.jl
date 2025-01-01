@@ -135,10 +135,10 @@ function postprocess_col(col, attrs; unitful::Bool)
             map(x -> parse(Date, x, dateformat"Y-m-d"), col)
         elseif eltype(col) <: Real && unit == "d"
             @warn "assuming julian days" column=attrs[:name] unit first(col)
-            map(julian2datetime, col)
+            map(x -> isnan(x) ? missing : julian2datetime(x), col)
         elseif eltype(col) <: Real && unit == "yr"
             @warn "assuming years AD" column=attrs[:name] unit first(col)
-            map(yeardecimal, col)
+            map(x -> isnan(x) ? missing : yeardecimal(x), col)
         elseif isnothing(unit)
             try
                 map(x -> parse(Date, x, dateformat"Y-m-d"), col)
