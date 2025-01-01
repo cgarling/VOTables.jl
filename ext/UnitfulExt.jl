@@ -2,21 +2,21 @@ module UnitfulExt
 
 using Unitful
 using VOTables.DataPipes
-import VOTables: unit_viz_to_jl, jl2votype, _unparse
+import VOTables: unit_vot_to_jl, jl2votype, _unparse
 
-function unit_viz_to_jl(col, viz::AbstractString)
-    m = match(r"^(log\(|\[)([^([]+)(\)|\])$", viz)
-    viz, postf = if !isnothing(m)
-        @info "assuming the decimal logarithm" viz
+function unit_vot_to_jl(col, vot_unit::AbstractString)
+    m = match(r"^(log\(|\[)([^([]+)(\)|\])$", vot_unit)
+    vot_unit, postf = if !isnothing(m)
+        @info "assuming the decimal logarithm" vot_unit
         (m[2], exp10)
     else
-        (viz, identity)
+        (vot_unit, identity)
     end
     u = try
         @p let
-            viz
+            vot_unit
             replace(__,
-                r"\b(/beam|/pix|electron)\b" => (s -> (@warn "ignoring the unsupported '$s' unit" viz; "")),
+                r"\b(/beam|/pix|electron)\b" => (s -> (@warn "ignoring the unsupported '$s' unit" vot_unit; "")),
                 "'" => "",  # XXX: shouldn't have arcminutes described this way?
             )
             replace(__,
@@ -40,9 +40,9 @@ function unit_viz_to_jl(col, viz::AbstractString)
         end
     catch exception
         if exception isa ArgumentError && occursin("could not be found in unit modules", exception.msg)
-            @warn "cannot parse unit '$viz', ignoring it"
+            @warn "cannot parse unit '$vot_unit', ignoring it"
         else
-            @warn "cannot parse unit '$viz', ignoring it" exception
+            @warn "cannot parse unit '$vot_unit', ignoring it" exception
         end
         return col
     end

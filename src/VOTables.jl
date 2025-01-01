@@ -146,7 +146,7 @@ function postprocess_col(col, attrs; unitful::Bool)
         dms2rad.(col)
     elseif unitful && !isnothing(unit)
         if eltype(col) <: Union{Number,Missing,Nothing}
-            unit_viz_to_jl(col, unit)
+            unit_vot_to_jl(col, unit)
         else
             @warn "column with a non-numeric eltype has a unit specified; ignoring the unit" column=attrs[:name] unit eltype(col) first(col)
             col
@@ -156,7 +156,7 @@ function postprocess_col(col, attrs; unitful::Bool)
     end
 end
 
-unit_viz_to_jl(_, _) = error("Load Unitful.jl to use units")
+unit_vot_to_jl(_, _) = error("Load Unitful.jl to use units")
 
 function _filltable!(cols, tblx)
     datax = @p tblx  _findall("ns:DATA", __, _namespaces(__))  only

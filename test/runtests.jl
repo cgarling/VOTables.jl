@@ -4,26 +4,26 @@ using TestItemRunner
 
 
 @testitem "unit parsing" begin
-    using VOTables: unit_viz_to_jl
+    using VOTables: unit_vot_to_jl
     using Unitful, UnitfulAngles, UnitfulAstro
 
-    @test unit_viz_to_jl([1.0], "m") |> only === 1.0u"m"
-    @test unit_viz_to_jl([1.0], "log(m)") |> only === 10.0u"m"
-    @test unit_viz_to_jl([1.0], "[m]") |> only === 10.0u"m"
-    @test unit_viz_to_jl([1.0], "Jy/pix") |> only === 1.0u"Jy"
-    @test unit_viz_to_jl([1.0], "Jy/beam") |> only === 1.0u"Jy"
-    @test unit_viz_to_jl([1.0], "electron.s") |> only === 1.0u"s"
-    @test unit_viz_to_jl([1.0], "s.electron") |> only === 1.0u"s"
-    @test unit_viz_to_jl([1.0], "m.s-1") |> only === 1.0u"m*s^-1"
-    @test unit_viz_to_jl([1.0], "m.s**3") |> only === 1.0u"m*s^3"
-    @test unit_viz_to_jl([1.0], "m.s**-3") |> only === 1.0u"m*s^-3"
-    @test unit_viz_to_jl([1.0], "m.s2") |> only === 1.0u"m*s^2"
-    @test unit_viz_to_jl([1.0], "m.s2.Hz-1") |> only === 1.0u"m*s^2*Hz^-1"
-    @test unit_viz_to_jl([1.0], "W/deg") |> only === 1.0u"W*°^-1"
-    @test unit_viz_to_jl([1.0], "W/arcsec") |> only === 1.0u"W*arcsecond^-1"
-    @test unit_viz_to_jl([1.0], "W/arcmin") |> only === 1.0u"W*arcminute^-1"
-    @test unit_viz_to_jl([1.0], "W/um") |> only === 1.0u"W*μm^-1"
-    @test unit_viz_to_jl([1.0], "[W/um]") |> only === 10.0u"W*μm^-1"
+    @test unit_vot_to_jl([1.0], "m") |> only === 1.0u"m"
+    @test unit_vot_to_jl([1.0], "log(m)") |> only === 10.0u"m"
+    @test unit_vot_to_jl([1.0], "[m]") |> only === 10.0u"m"
+    @test unit_vot_to_jl([1.0], "Jy/pix") |> only === 1.0u"Jy"
+    @test unit_vot_to_jl([1.0], "Jy/beam") |> only === 1.0u"Jy"
+    @test unit_vot_to_jl([1.0], "electron.s") |> only === 1.0u"s"
+    @test unit_vot_to_jl([1.0], "s.electron") |> only === 1.0u"s"
+    @test unit_vot_to_jl([1.0], "m.s-1") |> only === 1.0u"m*s^-1"
+    @test unit_vot_to_jl([1.0], "m.s**3") |> only === 1.0u"m*s^3"
+    @test unit_vot_to_jl([1.0], "m.s**-3") |> only === 1.0u"m*s^-3"
+    @test unit_vot_to_jl([1.0], "m.s2") |> only === 1.0u"m*s^2"
+    @test unit_vot_to_jl([1.0], "m.s2.Hz-1") |> only === 1.0u"m*s^2*Hz^-1"
+    @test unit_vot_to_jl([1.0], "W/deg") |> only === 1.0u"W*°^-1"
+    @test unit_vot_to_jl([1.0], "W/arcsec") |> only === 1.0u"W*arcsecond^-1"
+    @test unit_vot_to_jl([1.0], "W/arcmin") |> only === 1.0u"W*arcminute^-1"
+    @test unit_vot_to_jl([1.0], "W/um") |> only === 1.0u"W*μm^-1"
+    @test unit_vot_to_jl([1.0], "[W/um]") |> only === 10.0u"W*μm^-1"
 end
 
 @testitem "read 1" begin
