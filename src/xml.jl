@@ -15,7 +15,7 @@ function nodename_sv(ptr::Ptr{EzXML._Node})
     if node_str.name == C_NULL
         throw(ArgumentError("no node name"))
     end
-    StringView(node_str.name)
+    unsafe_wrap(StringView, node_str.name)
 end
 
 nodecontent_sv(f, node::EzXML.Node) = nodecontent_sv(f, node.ptr)
@@ -25,7 +25,7 @@ function nodecontent_sv(f, ptr::Ptr{EzXML._Node})
         Cstring,
         (Ptr{Cvoid},),
         ptr) != C_NULL
-    str = StringView(str_ptr)
+    str = unsafe_wrap(StringView, str_ptr)
     res = try
         f(str)
     finally
